@@ -1,0 +1,95 @@
+#include <Arduino.h>
+#include <Wire.h>
+#include <LiquidCrystal_PCF8574.h>
+#include <Ds1307.h>
+#define DS1307_I2C_ADDRESS 0x68  // This is the I2C address
+
+Ds1307 rtc(DS1307_I2C_ADDRESS);
+
+LiquidCrystal_PCF8574 lcd(0x27);  // set the LCD address to 0x27 for a 16 chars and 2 line display
+
+const static char* WeekDays[] =
+{
+    "Mon",
+    "Tue",
+    "Wed",
+    "Thu",
+    "Fri",
+    "Sat",
+    "Sun"
+};
+
+
+
+void setup()
+{
+  int error;
+
+  Serial.begin(115200);
+  Serial.println("LCD...");
+
+  while (! Serial);
+
+  Serial.println("Dose: check for LCD");
+
+  // See http://playground.arduino.cc/Main/I2cScanner
+  Wire.begin();
+  Wire.beginTransmission(0x27);
+  error = Wire.endTransmission();
+  Serial.print("Error: ");
+  Serial.print(error);
+
+  if (error == 0) {
+    Serial.println(": LCD found.");
+
+  } else {
+    Serial.println(": LCD not found.");
+  } // if
+
+  lcd.begin(16, 2); // initialize the lcd
+
+
+  // initialize the RTC
+    rtc.init();
+
+
+} // setup()
+
+void loop()
+{
+
+
+
+     Ds1307::DateTime now;
+     rtc.getDateTime(&now);
+
+     static uint8_t last_second = 0;
+     if (last_second != now.second)
+     {
+         last_second = now.second;
+         lcd.home(); lcd.clear();
+         lcd.print("20");
+         lcd.print(now.year);    // 00-99
+         lcd.print('-');
+         if (now.month < 10) lcd.print('0');
+         lcd.print(now.month);   // 01-12
+         lcd.print('-');
+         if (now.day < 10) lcd.print('0');
+         lcd.print(now.day);     // 01-31
+         lcd.print(' ');
+         lcd.print(WeekDays[now.dow - 1]); // 1-7
+         lcd.setCursor(0, 1);
+
+         if (now.hour < 10) lcd.print('0');
+         lcd.print(now.hour);    // 00-23
+         lcd.print(':');
+         if (now.minute < 10) lcd.print('0');
+         lcd.print(now.minute);  // 00-59
+         lcd.print(':');
+         if (now.second < 10) lcd.print('0');
+         lcd.print(now.second);  // 00-59
+     }
+
+     delay(100);
+
+} // loop()
