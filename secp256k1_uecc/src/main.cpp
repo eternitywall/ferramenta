@@ -38,6 +38,17 @@ void setup() {
   uECC_set_rng(&RNG);
 }
 
+
+void print_hex(uint8_t* val, int size) {
+  for(int i = 0; i<size; i++ ) {
+    if(val[i]<16)
+      Serial.print("0");
+    Serial.print(val[i], HEX);
+  }
+  Serial.println();
+}
+
+
 void loop() {
   const struct uECC_Curve_t * curve = uECC_secp256k1();
 
@@ -48,13 +59,21 @@ void loop() {
   uECC_make_key(public_key, private_key, curve);
   unsigned long b = millis();
   
+  Serial.print("Private key "); print_hex(private_key, 32);
   Serial.print("Made key in "); Serial.println(b-a);
+  Serial.print("Public key "); print_hex(public_key, 64);
 
   uint8_t message_hash[32];
-  uint8_t signature[75];
+  Serial.print("message_hash is "); print_hex(message_hash, 32);
+  uint8_t signature[64];
   a = millis();
   uECC_sign(private_key,message_hash,32,signature,curve);
   b = millis();
   
-  Serial.print("Singature made in "); Serial.println(b-a);
+  Serial.print("Signature made in "); Serial.println(b-a);
+  Serial.print("Signature is "); print_hex(signature, 64);
+
+  // it would be nice to use uECC_sign_deterministic but need a sha256 context which we can't found
+  
+  Serial.println();
 }
